@@ -8,13 +8,15 @@ Optional steps are separated in blockquotes.
 
 ## 1. Install package dependencies needed for the installation process
 
-```sudo apt update
+```
+sudo apt update
 sudo apt install software-properties-common git python-software-properties unzip jq screen build-essential autoconf cmake libtool libprotobuf-c-dev libgmp-dev libsqlite3-dev python-dev libevent-dev pkg-config libssl-dev libcurl4-gnutls-dev
 ```
 
 ## 2. Install and configure Java 8
 
-```sudo add-apt-repository ppa:webupd8team/java
+```
+sudo add-apt-repository ppa:webupd8team/java
 sudo apt update
 sudo apt install oracle-java8-installer
 ```
@@ -28,7 +30,8 @@ Take note of your JAVA_HOME environment variable with `echo $JAVA_HOME`, since i
 
 ## 3. Install Chips3 dependencies
 
-```sudo add-apt-repository ppa:bitcoin/bitcoin
+```
+sudo add-apt-repository ppa:bitcoin/bitcoin
 sudo apt update
 sudo apt install -y libdb4.8-dev libdb4.8++-dev
 wget https://dl.bintray.com/boostorg/release/1.64.0/source/boost_1_64_0.zip
@@ -42,7 +45,8 @@ sudo ./b2 install
 
 ## 4. Install Chips3
 
-```git clone https://github.com/jl777/chips3.git
+```
+git clone https://github.com/jl777/chips3.git
 cd chips3
 ./autogen.sh
 ./configure --with-boost=/usr/local/
@@ -55,7 +59,8 @@ make
 ## 5. Install Maven
 
 This is required to build the explorer web app.
-```cd /opt
+```
+cd /opt
 sudo wget http://www-eu.apache.org/dist/maven/maven-3/3.3.9/binaries/apache-maven-3.3.9-bin.tar.gz
 sudo tar -xvzf apache-maven-3.3.9-bin.tar.gz
 sudo mv apache-maven-3.3.9 maven
@@ -67,19 +72,22 @@ sudo nano /etc/profile.d/mavenenv.sh
 ```
 
 Add the following lines to the file:
-```export M2_HOME=/opt/maven
+```
+export M2_HOME=/opt/maven
 export PATH=${M2_HOME}/bin:${PATH}
 ```
 
 Finally, load the configuration:
-```sudo chmod +x /etc/profile.d/mavenenv.sh
+```
+sudo chmod +x /etc/profile.d/mavenenv.sh
 source /etc/profile.d/mavenenv.sh
 ```
 
 
 ## 6. Build the Chips Explorer app
 
-```cd; git clone https://github.com/SuperNETorg/chips-explorer.git
+```
+cd; git clone https://github.com/SuperNETorg/chips-explorer.git
 cd chips-explorer
 mvn install
 ```
@@ -88,7 +96,8 @@ mvn install
 ## 7. Install the Tomcat webserver
 
 We'll use Tomcat to run the Java web app.
-```sudo groupadd tomcat
+```
+sudo groupadd tomcat
 sudo useradd -s /bin/false -g tomcat -d /opt/tomcat tomcat
 cd /tmp
 curl -O http://apache.mirrors.spacedump.net/tomcat/tomcat-8/v8.5.20/bin/apache-tomcat-8.5.20.tar.gz
@@ -111,7 +120,8 @@ In this file, you need to edit `Environment=JAVA_HOME=` so it matches your JAVA_
 > By default, Tomcat runs on port 8080. In order to make it run on the default https port, and since it is not recommended to run Tomcat as root (which would be needed to use a port below 1024 in Unix), we'll route port 80 to 8080 using iptables with `sudo iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 80 -j REDIRECT --to-port 8080`
 
 Now we restart Tomcat with the configuration changes.
-```sudo systemctl daemon-reload
+```
+sudo systemctl daemon-reload
 sudo systemctl start tomcat
 ```
 
@@ -136,11 +146,13 @@ sudo nano /opt/tomcat/conf/tomcat-users.xml
 Right before the last `</tomcat-users>` line, add `<user username="ADMIN_NAME" password="ADMIN_PASSWORD" roles="manager-gui,admin-gui"/>` replacing ADMIN_NAME and ADMIN_PASSWORD with the credentials you want to use to access the Tomcat manager.
 
 For convenience, you may want to allow remote access to the Tomcat manager, by commenting out or removing the restriction to localhost in these two context files: 
-```sudo nano /opt/tomcat/webapps/manager/META-INF/context.xml
+```
+sudo nano /opt/tomcat/webapps/manager/META-INF/context.xml
 sudo nano /opt/tomcat/webapps/host-manager/META-INF/context.xml
 ```
 Both files, ignoring comments, should look like this:
-```<?xml version="1.0" encoding="UTF-8"?>
+```
+<?xml version="1.0" encoding="UTF-8"?>
 <Context antiResourceLocking="false" privileged="true" >
 </Context>
 ```
@@ -149,11 +161,13 @@ Both files, ignoring comments, should look like this:
 ## 9. Run chipsd
 
 Create a basic configuration file for chipsd:
-```cd; mkdir .chips
+```
+cd; mkdir .chips
 nano .chips/chips.conf
 ```
 Add the following:
-```rpcport=57776
+```
+rpcport=57776
 peerport=57777
 rpcuser=chipsrpc
 rpcpassword=your_secure_rpc_password
@@ -163,7 +177,8 @@ addnode=94.130.96.114
 You can also include other options you need.
 
 Start chipsd the way you prefer, for instance under a screen session:
-```screen -S chips
+```
+screen -S chips
 chipsd
 ```
 Then hit Ctrl+A, then D to detach from the screen session. Chips will be now downloading the blockchain, you can check its status anytime using `chips-cli getinfo`.
