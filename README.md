@@ -168,11 +168,15 @@ Then hit Ctrl+A, then D to detach from the screen session. Chips will be now dow
 ## 10. Run the blockchain explorer app
 
 Copy the Chips Explorer app built in step 6 to the Tomcat webapps directory:
+
 ```cd; sudo cp chips-explorer/bitcoin-transactions-server/target/bitcoin-transactions-server-0.1.war /opt/tomcat/webapps/chips-explorer.war
 ```
+
 Finally, restart Tomcat.
+
 ```sudo systemctl restart tomcat
 ```
+
 Your Chips Blockchain Explorer will be now running at `http://YOUR_IP/chips-explorer`.
 
 
