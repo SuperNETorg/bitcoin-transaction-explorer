@@ -1,99 +1,157 @@
-# Bitcoin node block explorer
+# Chips Explorer Installation Guide
 
-Simple and pure block explorer you can run on top of a full node.
+This repository is based on the [Bitcoin Node Block Explorer](https://github.com/JornC/bitcoin-transaction-explorer) by JornC.
 
-This block explorer patches into your Bitcoin Core node's JSON-RPC interface to retrieve transaction and block information.
+The installation guide assumes you're running a VPS with 2+ GB RAM, running Ubuntu 16.04, and using a user with sudoer permissions starting in the `/home/user` directory.
 
-It runs as a simple web application you can run on any J2EE Web Container (Jetty, Tomcat, etc.), point it toward your node and you're good to go. (Note: it also supports running on top of Blockr's API and maybe some others later on)
+Optional steps are separated in blockquotes.
 
-This block explorer remains pure to the blockchain, this means it is not dependent on any source of data other than the blockchain. Bitcoin amount values will not be displayed in fiat, transaction or block receive times do not exist.
+## 1. Install package dependencies needed for the installation process
 
-# Features
+```sudo apt update
+sudo apt install software-properties-common git python-software-properties unzip jq screen build-essential autoconf cmake libtool libprotobuf-c-dev libgmp-dev libsqlite3-dev python-dev libevent-dev pkg-config libssl-dev libcurl4-gnutls-dev```
 
-#### Block viewer
+## 2. Install and configure Java 8
 
-Displays all available block information. Includes an interactive hex viewer which displays the meaning of every last byte in the headers, aswell as the coinbase transaction.
+sudo add-apt-repository ppa:webupd8team/java
+sudo apt update
+sudo apt install oracle-java8-installer
 
-#### Transaction viewer
+> Optionally, if other Java versions are running in the system you may want to configure the Java 8 version you just installed as default for both execution and compilation: 
+>`update-alternatives --config java`
+>`update-alternatives --config javac`
 
-Displays all available transaction information. Like in the block viewer, displays the meaning of every single byte in a raw transaction through an interactive hex viewer.
+Take note of your JAVA_HOME environment variable with `echo $JAVA_HOME`, since it will be needed later. In our example, this is `/usr/lib/jvm/java-8-oracle`.
 
-#### Universal search
 
-Input anything, transaction ID, block height, block hash, raw blocks, raw transactions, and this explorer will figure out what you mean and display what's appropriate.
+## 3. Install Chips3 dependencies
 
-#### Mining simulator
+```sudo add-apt-repository ppa:bitcoin/bitcoin
+sudo apt update
+sudo apt install -y libdb4.8-dev libdb4.8++-dev
+wget https://dl.bintray.com/boostorg/release/1.64.0/source/boost_1_64_0.zip
+unzip boost_1_64_0.zip
+cd boost_1_64_0
+./bootstrap.sh
+./b2
+sudo ./b2 install```
 
-Constructs a raw block which, if valid, would be accepted by the whole of the network. Visualizes what happens when you're mining, increases the nonce/extranonce, updates the timestamp and computes the block hash. Allows you to control the whole thing.
 
-A sneak-preview client-only version of this is available at http://jornc.github.io/bitcoin-transaction-explorer/
+## 4. Install Chips3
 
-This preview also includes the block and transaction hex viewers with contextual information for each field.
+```git clone https://github.com/jl777/chips3.git
+cd chips3
+./autogen.sh
+./configure --with-boost=/usr/local/
+make```
 
-#### Script viewer
+> to install the binaries in the system, run `cd src; sudo cp chipsd chips-cli /usr/local/bin`.
 
-Visualizes bitcoin script interpretation in a step-by-step basis.
 
-#### Raw transaction interpreter
+## 5. Install Maven
 
-Insert any raw transaction and this explorer will display em like it would any other transaction.
+This is required to build the explorer web app.
+```cd /opt
+sudo wget http://www-eu.apache.org/dist/maven/maven-3/3.3.9/binaries/apache-maven-3.3.9-bin.tar.gz
+sudo tar -xvzf apache-maven-3.3.9-bin.tar.gz
+sudo mv apache-maven-3.3.9 maven```
 
-#### Raw block interpreter
+Create a Maven environment configuration file:
+```sudo nano /etc/profile.d/mavenenv.sh```
 
-Insert any raw block and --- see above.
+Add the following lines to the file:
+```export M2_HOME=/opt/maven
+export PATH=${M2_HOME}/bin:${PATH}```
 
-#### Raw script interpreter
+Finally, load the configuration:
+```sudo chmod +x /etc/profile.d/mavenenv.sh
+source /etc/profile.d/mavenenv.sh```
 
-See above.
 
-#### Direct JSON-RPC interface (Optional, and under construction)
+## 6. Build the Chips Explorer app
 
-If this explorer is run on top of a node (rather than an external API), then a direct JSON-RPC interface to the node may be spoken to. Just insert any command you're used to (getblock, getrawtransaction, getbestblockhash, etc.), and the explorer will display the response, and show some extra information of the stuff it understands (transaction/block ids or their serialized form, script, and many other bitcoin-specific and unspecific fields).
+```cd; git clone https://github.com/SuperNETorg/chips-explorer.git
+cd chips-explorer
+mvn install```
 
-#### Address balances
 
-If this explorer is run on top of a node that has an address index such as this one: https://github.com/btcdrak/bitcoin/tree/addrindex-0.11 then this explorer will be able to look up the balance of an address and show every output associated with it.
+## 7. Install the Tomcat webserver
 
-# How to run it
+We'll use Tomcat tu run the Java web app.
+```sudo groupadd tomcat
+sudo useradd -s /bin/false -g tomcat -d /opt/tomcat tomcat
+cd /tmp
+curl -O http://apache.mirrors.spacedump.net/tomcat/tomcat-8/v8.5.20/bin/apache-tomcat-8.5.20.tar.gz
+sudo mkdir /opt/tomcat
+sudo tar xzvf apache-tomcat-8*tar.gz -C /opt/tomcat --strip-components=1
+cd /opt/tomcat
+sudo chgrp -R tomcat /opt/tomcat
+sudo chmod -R g+r conf
+sudo chmod g+x conf
+sudo chown -R tomcat webapps/ work/ temp/ logs/```
 
-This project is currently hosted on top of the following 2 nodes:
+Make sure that the Tomcat service is using the correct JAVA_HOME path, by editing it in
+```sudo nano /etc/systemd/system/tomcat.service```
 
-http://srv1.yogh.io
+In this file, you need to edit `Environment=JAVA_HOME=` so it matches your JAVA_HOME, appending `/jre` to it. In our example, this would be `Environment=JAVA_HOME=/usr/lib/jvm/java-8-oracle/jre`
 
-http://srv2.yogh.io
+> By default, Tomcat runs on port 8080. In order to make it run on the default https port, and since it is not recommended to run Tomcat as root (which would be needed to use a port below 1024 in Unix), we'll route port 80 to 8080 using iptables with `sudo iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 80 -j REDIRECT --to-port 8080`
 
-The former will closely follow the master branch, and will likely not always be as stable / contain bugs, but contain the latest changes.
+Now we restart Tomcat with the configuration changes.
+```sudo systemctl daemon-reload
+sudo systemctl start tomcat```
 
-The latter remains conservative and lags at stable releases.
+> You can now check that tomcat is correctly running with `systemctl status tomcat`.
 
-You can run it yourself (encouraged! let me know!) if you have a fully built .war file of this project (see below), simply deploying it into any J2EE web container will suffice.
+You should be able to find the Tomcat default page at `http://YOUR_IP`.
+ 
+> If the default page does not show up, it might be due to Java binding to tcp6 addresses only. To fix tcp4/tcp6 binding issues you can force Tomcat Java to prefer tcp4 doing `sudo nano bin/setenv.sh` and adding the line `CATALINA_OPTS="$JAVA_OPTS -Djava.net.preferIPv4Stack=true -Djava.net.preferIPv4Addresses=true "`.
 
-If you don't have a full node you can connect to Blockr (which is default if unconfigured), if you do the node needs to be fully indexed (txindex=1) and act as a JSON-RPC server (server=1).
+Finally, enable tomcat at boot:
+```sudo systemctl enable tomcat```
 
-# How to build it
 
-- [clone the repository]
+## 8. Configure the Tomcat manager
 
-- > mvn install
+```sudo nano /opt/tomcat/conf/tomcat-users.xml```
 
-- Find the .war file in /bitcoin-transactions-server/target/
+Right before the last `</tomcat-users>` line, add `<user username="ADMIN_NAME" password="ADMIN_PASSWORD" roles="manager-gui,admin-gui"/>` replacing ADMIN_NAME and ADMIN_PASSWORD with the credentials you want to use to access the Tomcat manager.
 
-- deploy the (extracted) .war file to a J2EE web container (jetty, tomcat, etc.)
+For convenience, you may want to allow remote access to the Tomcat manager, by commenting out or removing the restriction to localhost in these two context files: 
+```sudo nano /opt/tomcat/webapps/manager/META-INF/context.xml
+sudo nano /opt/tomcat/webapps/host-manager/META-INF/context.xml```
+Both files, ignoring comments, should look like this:
+```<?xml version="1.0" encoding="UTF-8"?>
+<Context antiResourceLocking="false" privileged="true" >
+</Context>```
 
-- done
 
-# Configuration
+## 9. Run chipsd
 
-- Navigate to the web application
+Create a basic configuration file for chipsd:
+```cd; mkdir .chips
+nano .chips/chips.conf```
+Add the following:
+```rpcport=57776
+peerport=57777
+rpcuser=chipsrpc
+rpcpassword=your_secure_rpc_password
+addnode=5.9.253.195
+addnode=94.130.96.114```
+You can also include any other options you need.
 
-- Enter 'config' in the search field, hit enter
+Start chipsd the way you prefer, for instance under a screen session:
+```screen -S chips
+chipsd```
+Then hit Ctrl+A, then D to detach from the screen session. Chips will be now downloading the blockchain, you can check its status anytime using `chips-cli getinfo`.
 
-- You'll figure it out from there
 
-# Implementation
+## 10. Run the blockchain explorer app
 
-The web application is a GWT (Google Web Toolkit) project that's patched into, essentially, a JSON-RPC proxy for a Bitcoin Core node. The proxy can be configured to reach out to Blockr's API (and others) if you aren't running a node, although it's always nice to use your own node instead.
+Copy the Chips Explorer app built in step 6 to the Tomcat webapps directory:
+```cd; sudo cp chips-explorer/bitcoin-transactions-server/target/bitcoin-transactions-server-0.1.war /opt/tomcat/webapps/chips-explorer.war```
+Finally, restart Tomcat.
+```sudo systemctl restart tomcat```
+Your Chips Blockchain Explorer will be now running at `http://YOUR_IP/chips-explorer`.
 
-The proxy will only request the node's getblock, getblockhash, getbestblockhash and getrawtransaction methods. It constructs (if needed) and forwards raw transaction and block data which will be interpreted locally on the client (in the browser).
 
-It'll run in any J2EE web container when built as a .war file.
