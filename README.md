@@ -62,7 +62,8 @@ sudo mv apache-maven-3.3.9 maven
 ```
 
 Create a Maven environment configuration file:
-```sudo nano /etc/profile.d/mavenenv.sh
+```
+sudo nano /etc/profile.d/mavenenv.sh
 ```
 
 Add the following lines to the file:
@@ -86,7 +87,7 @@ mvn install
 
 ## 7. Install the Tomcat webserver
 
-We'll use Tomcat tu run the Java web app.
+We'll use Tomcat to run the Java web app.
 ```sudo groupadd tomcat
 sudo useradd -s /bin/false -g tomcat -d /opt/tomcat tomcat
 cd /tmp
@@ -101,7 +102,8 @@ sudo chown -R tomcat webapps/ work/ temp/ logs/
 ```
 
 Make sure that the Tomcat service is using the correct JAVA_HOME path, by editing it in
-```sudo nano /etc/systemd/system/tomcat.service
+```
+sudo nano /etc/systemd/system/tomcat.service
 ```
 
 In this file, you need to edit `Environment=JAVA_HOME=` so it matches your JAVA_HOME, appending `/jre` to it. In our example, this would be `Environment=JAVA_HOME=/usr/lib/jvm/java-8-oracle/jre`
@@ -120,13 +122,15 @@ You should be able to find the Tomcat default page at `http://YOUR_IP`.
 > If the default page does not show up, it might be due to Java binding to tcp6 addresses only. To fix tcp4/tcp6 binding issues you can force Tomcat Java to prefer tcp4 doing `sudo nano bin/setenv.sh` and adding the line `CATALINA_OPTS="$JAVA_OPTS -Djava.net.preferIPv4Stack=true -Djava.net.preferIPv4Addresses=true "`.
 
 Finally, enable tomcat at boot:
-```sudo systemctl enable tomcat
+```
+sudo systemctl enable tomcat
 ```
 
 
 ## 8. Configure the Tomcat manager
 
-```sudo nano /opt/tomcat/conf/tomcat-users.xml
+```
+sudo nano /opt/tomcat/conf/tomcat-users.xml
 ```
 
 Right before the last `</tomcat-users>` line, add `<user username="ADMIN_NAME" password="ADMIN_PASSWORD" roles="manager-gui,admin-gui"/>` replacing ADMIN_NAME and ADMIN_PASSWORD with the credentials you want to use to access the Tomcat manager.
@@ -168,9 +172,11 @@ Then hit Ctrl+A, then D to detach from the screen session. Chips will be now dow
 ## 10. Run the blockchain explorer app
 
 Copy the Chips Explorer app built in step 6 to the Tomcat webapps directory:
-```cd; sudo cp chips-explorer/bitcoin-transactions-server/target/bitcoin-transactions-server-0.1.war /opt/tomcat/webapps/chips-explorer.war
+```
+cd; sudo cp chips-explorer/bitcoin-transactions-server/target/bitcoin-transactions-server-0.1.war /opt/tomcat/webapps/chips-explorer.war
 ```
 Finally, restart Tomcat.
-```sudo systemctl restart tomcat
+```
+sudo systemctl restart tomcat
 ```
 Your Chips Blockchain Explorer will be now running at `http://YOUR_IP/chips-explorer`.
