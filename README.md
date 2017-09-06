@@ -22,8 +22,7 @@ sudo apt install oracle-java8-installer
 ```
 
 > Optionally, if other Java versions are running in the system you may want to configure the Java 8 version you just installed as default for both execution and compilation: 
->`update-alternatives --config java`
->`update-alternatives --config javac`
+>`update-alternatives --config java` and `update-alternatives --config javac`
 
 Take note of your JAVA_HOME environment variable with `echo $JAVA_HOME`, since it will be needed later. In our example, this is `/usr/lib/jvm/java-8-oracle`.
 
@@ -53,7 +52,7 @@ cd chips3
 make
 ```
 
-> to install the binaries in the system, run `cd src; sudo cp chipsd chips-cli /usr/local/bin`.
+> to install the binaries in the system, run `cd src; sudo cp chipsd chips-cli /usr/local/bin`
 
 
 ## 5. Install Maven
