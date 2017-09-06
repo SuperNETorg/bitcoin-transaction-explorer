@@ -189,8 +189,14 @@ Copy the Chips Explorer app built in step 6 to the Tomcat webapps directory:
 ```
 cd; sudo cp chips-explorer/bitcoin-transactions-server/target/bitcoin-transactions-server-0.1.war /opt/tomcat/webapps/chips-explorer.war
 ```
-Finally, restart Tomcat.
+Restart Tomcat.
 ```
 sudo systemctl restart tomcat
 ```
 Your Chips Blockchain Explorer will be now running at `http://YOUR_IP/chips-explorer`.
+
+
+## 11. Configure the blockchain explorer
+
+Finally, you need to configure some parameters in the explorer itself. In the search field enter `config` and press Enter. 
+The different parameters are quite self explanatory, you just need to make sure that they match with the `chips.conf` contents you created in step 9.
